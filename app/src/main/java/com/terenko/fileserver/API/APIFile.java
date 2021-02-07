@@ -17,9 +17,11 @@ public interface APIFile {
     @POST("/file/add/{CatalogID}")
     public Call<Responce> addFile(@Part MultipartBody.Part file,@Path("CatalogID")String catalogID);
     @POST("/file/del/{CatalogID}/{fileID}")
-    public Call<Responce> delFile(@Path("catalogID")String catalogID,@Path("fileID")String fileID);
+    public Call<Responce> delFile(@Path("CatalogID")String catalogID,@Path("fileID")String fileID);
     @GET("/file/download/{CatalogID}/{fileID}")
-    public Call<Responce> download(@Path("catalogID")String catalogID,@Path("fileID")String fileID);
+    public Call<Responce> download(@Path("CatalogID")String catalogID,@Path("fileID")String fileID);
+    @GET("/file/getFiles/{CatalogID}")
+    public Call<Responce> getFilesFromCatalog(@Path("CatalogID")String catalogID);
 
 
 

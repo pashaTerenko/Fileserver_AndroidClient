@@ -12,9 +12,9 @@ public class CatalogDTO implements DTO {
     private String name;
     private AccessMode accessMode;
     private AccountDTO creator;
-    private List<FileInfo> fileList;
+    private List<String> fileList;
     Set<String> haveAccess;
-    public CatalogDTO(String uuid, String name, AccessMode accessMode, AccountDTO creator, List<FileInfo> fileList,Set<String> haveAccess) {
+    public CatalogDTO(String uuid, String name, AccessMode accessMode, AccountDTO creator, List<String> fileList,Set<String> haveAccess) {
         this.uuid = uuid;
         this.name = name;
         this.accessMode = accessMode;
@@ -44,7 +44,7 @@ public class CatalogDTO implements DTO {
         return creator;
     }
 
-    public List<FileInfo> getFileList() {
+    public List<String> getFileList() {
         return fileList;
     }
 

@@ -2,6 +2,7 @@ package com.terenko.fileserver.Layout.ui.File;
 
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,13 +29,17 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.terenko.fileserver.API.ApiService;
 import com.terenko.fileserver.App;
 import com.terenko.fileserver.DTO.CatalogDTO;
+import com.terenko.fileserver.DTO.FileDTO;
 import com.terenko.fileserver.DTO.FileInfo;
 import com.terenko.fileserver.DTO.Responce;
 import com.terenko.fileserver.Layout.ui.Catalog.MainActivity;
 import com.terenko.fileserver.Layout.ui.login.LoginActivity;
 import com.terenko.fileserver.R;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -48,6 +54,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -61,8 +68,6 @@ import retrofit2.Response;
 
 
 public class FileActivity extends AppCompatActivity {
-    private String[] mFileList;
-    private File mPath = new File(Environment.getExternalStorageDirectory() + "//yourdir//");
 
 
     private static final int PICKFILE_RESULT_CODE = 111;
@@ -125,46 +130,131 @@ public class FileActivity extends AppCompatActivity {
         }
     }
 
-    /*    public void addFile(String catalogName,boolean access){
-            app.getApi().getApiCatalog().addCatalog(catalogName,access).enqueue(new Callback<Responce>() {
-                @Override
-                public void onResponse(Call<Responce> call,@NotNull Response<Responce> response) {
-                    if(response.errorBody()!=null){
-                        Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    if(response.body().getStatusCode()!=200){
-                        Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
-                    }else {
-
-
-                        Toast.makeText(FileActivity.this,
-                                R.string.catalog_added,
-                                Toast.LENGTH_SHORT).show();
-                        loadData();
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<Responce> call, Throwable t) {
-                    Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }*/
     public void loadData() {
 
+        ApiService apiService = app.getApi();
+        if (apiService == null) {
+            Toast.makeText(FileActivity.this, R.string.toast_login, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        apiService.getApiFile().getFilesFromCatalog(fileViewModel.getCatalog().getValue().getUuid()).enqueue(new Callback<Responce>() {
+            @Override
+            public void onResponse(Call<Responce> call, @NotNull Response<Responce> response) {
+                if (response.errorBody() != null) {
+                    Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (response.body().getStatusCode() != 200) {
+                    Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
+                } else {
+                    fileViewModel.getData().setValue(response.body().getDtoList().stream().map(x -> (FileInfo) x).collect(Collectors.toList()));
 
-        fileViewModel.getData().setValue(fileViewModel.getCatalog().getValue().getFileList());
+                }
+            }
 
+            @Override
+            public void onFailure(Call<Responce> call, Throwable t) {
+                Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
+            }
+        });
 
     }
 
+    public File downloadToStorage(byte[] data, String name) {
+        File mPath = new File(Environment.getExternalStorageDirectory() + "//Files//" + name);
+        if (mPath.exists()) {
+            openFile(mPath);
+            return mPath;
+        }
+        try (FileOutputStream fileOutputStream = new FileOutputStream(mPath)) {
+            fileOutputStream.write(data);
+            openFile(mPath);
+            return mPath;
+        } catch (FileNotFoundException e) {
+            Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
+
+        } catch (IOException e) {
+            Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
+
+        }
+             return null;
+    }
+    public void openFile(File file){
+     MimeTypeMap myMime = MimeTypeMap.getSingleton();
+     Intent newIntent = new Intent(Intent.ACTION_VIEW);
+     String mimeType = myMime.getMimeTypeFromExtension(fileExt(file.getAbsolutePath()).substring(1));
+     newIntent.setDataAndType(Uri.fromFile(file),mimeType);
+     newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+     try {
+         this.startActivity(newIntent);
+     } catch (ActivityNotFoundException e) {
+         Toast.makeText(this, "No handler for this type of file.", Toast.LENGTH_LONG).show();
+     }
+
+        
+
+    }
+           private String fileExt(String url) {
+               if (url.indexOf("?") > -1) {
+                   url = url.substring(0, url.indexOf("?"));
+               }
+               if (url.lastIndexOf(".") == -1) {
+                   return null;
+               } else {
+                   String ext = url.substring(url.lastIndexOf(".") + 1);
+                   if (ext.indexOf("%") > -1) {
+                       ext = ext.substring(0, ext.indexOf("%"));
+                   }
+                   if (ext.indexOf("/") > -1) {
+                       ext = ext.substring(0, ext.indexOf("/"));
+                   }
+                   return ext.toLowerCase();
+
+               }
+           }
+
+
+
+
+    public void downloadFile(String uuid) {
+        app.getApi().getApiFile().download(fileViewModel.getCatalog().getValue().getUuid(), uuid).enqueue(new Callback<Responce>() {
+            @Override
+            public void onResponse(Call<Responce> call, Response<Responce> response) {
+                if (response.errorBody() != null) {
+                    Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (response.body().getStatusCode() != 200) {
+                    Toast.makeText(FileActivity.this, R.string.Data_loading_error, Toast.LENGTH_SHORT).show();
+                } else {
+                    FileDTO fileDTO = (FileDTO) response.body().getDto();
+                    downloadToStorage(fileDTO.getData(), fileDTO.getName());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Responce> call, Throwable t) {
+
+            }
+        });
+
+    }
+
+    public void onItemSelected(FileInfo fileInfo) {
+                   downloadFile(fileInfo.getUuid());
+
+    }
+
+    public App getApp() {
+        return app;
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
+
     public String getFileName(Uri uri) {
         String result = null;
         if (uri.getScheme().equals("content")) {
@@ -186,19 +276,20 @@ public class FileActivity extends AppCompatActivity {
         }
         return result;
     }
+
     private void uploadFile(Uri uri) {
 
         try (InputStream inputStream =
                      getContentResolver().openInputStream(uri);
 
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-             ) {
+        ) {
 
 
             if (uri != null) {
 
                 int nRead;
-                byte[   ] data = new byte[16384];
+                byte[] data = new byte[16384];
 
                 while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
                     outputStream.write(data, 0, nRead);
@@ -288,8 +379,14 @@ public class FileActivity extends AppCompatActivity {
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             text = itemView.findViewById(R.id.text);
-            //TODO
-            // itemView.setOnClickListener());
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    FileActivity context = (FileActivity) v.getContext();
+                    context.onItemSelected(dataDTO);
+                }
+            });
         }
 
         public void bind(FileInfo data) {
