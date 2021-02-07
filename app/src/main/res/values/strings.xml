@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">File server</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in </string>
+    <string name="register_button">register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="badCredential" >Bad credentials</string>
+    <string name="login_title">Login page</string>
+    <string name="regiter_title">registration page</string>
+    <string name="back_to">Back</string>
+    <string name="refresh">refresh</string>
+    <string name="new_catalog">new catalog</string>
+    <string name="is_private"><![CDATA[is private>]]></string>
+    <string name="set_catalog_name">set catalog name</string>
+    <string name="addDialogTitle">Add Catalog</string>
+    <string name="Data_loading_error">Data loading error</string>
+    <string name="catalog_added">catalog added</string>
+    <string name="toast_login">login first</string>
+    <string name="file_uploud_failed">File upload failed</string>
+    <string name="file_upload_success">file uploaded</string>
+</resources>
