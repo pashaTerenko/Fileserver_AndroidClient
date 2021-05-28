@@ -8,30 +8,28 @@
     <EditText
         android:id="@+id/catalog_addInput"
 
-        android:layout_width="0dp"
+        android:layout_width="255dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="74dp"
+
         android:autofillHints="@string/set_catalog_name"
         android:hint="@string/set_catalog_name"
         android:inputType="textEmailAddress"
         android:selectAllOnFocus="true"
-        app:layout_constraintEnd_toStartOf="@+id/catalog_checkboxAccess"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="MissingConstraints" />
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="60dp"
+        tools:layout_editor_absoluteY="16dp" />
 
     <CheckBox
         android:id="@+id/catalog_checkboxAccess"
         style="?android:attr/textAppearanceMedium"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="@string/is_private"
-        app:layout_constraintBottom_toBottomOf="@+id/catalog_addInput"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/catalog_addInput"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="MissingConstraints" />
+        android:layout_width="219dp"
+        android:layout_height="64dp"
+        android:layout_below="@+id/catalog_addInput"
+
+        android:text="@string/is_private"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="102dp"
+        tools:layout_editor_absoluteY="67dp" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

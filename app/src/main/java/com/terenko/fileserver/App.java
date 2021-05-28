@@ -1,12 +1,16 @@
 package com.terenko.fileserver;
 
+import android.app.ActivityManager;
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
@@ -16,6 +20,7 @@ import com.terenko.fileserver.DTO.AuthenticationRequestDto;
 import com.terenko.fileserver.DTO.AuthenticationToken;
 import com.terenko.fileserver.DTO.CatalogDTO;
 import com.terenko.fileserver.DTO.Responce;
+import com.terenko.fileserver.Layout.ui.Catalog.CatalogActivity;
 import com.terenko.fileserver.Layout.ui.login.LoggedInUserView;
 import com.terenko.fileserver.Layout.ui.login.LoginResult;
 import com.terenko.fileserver.Layout.ui.login.RegisterResult;
@@ -46,14 +51,7 @@ public class App extends Application {
         currentCatalog=new MutableLiveData<>();
         token=new MutableLiveData<>();
 
-        loadCredentials();
-        token.observeForever(new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                apiService = new ApiService(token.getValue());
-
-            }
-        });
+        token.observeForever(s -> apiService = new ApiService(token.getValue()));
     }
 
     public ApiServiceLogin getApiServiceLogin() {
@@ -83,14 +81,15 @@ public class App extends Application {
 
     }
 
-    public void loadCredentials() {
+    public void loadCredentials(Context context) {
         SharedPreferences sp = getSharedPreferences(SAVED_STATE,
                 Context.MODE_PRIVATE);
 
         String username= sp.getString(USERNAME,"");
         String password= sp.getString(PASSWORD,"");
         if(!username.equals("")&&!password.equals("")){
-            startlogin(username,password);
+            startlogin(username,password,context);
+
         }
 
     }
@@ -110,6 +109,9 @@ public class App extends Application {
         apiServiceLogin.getApi().login(authenticationRequestDto).enqueue(new Callback<Responce>() {
             @Override
             public void onResponse(Call<Responce> call, @Nullable Response<Responce> response) {
+                if(response.body()==null){
+                    return;
+                }
                 if (response.body().getStatusCode() != 200) {
                     loginResultMutableLiveData.setValue(new LoginResult(R.string.badCredential));
                     return;
@@ -123,6 +125,7 @@ public class App extends Application {
                 loginResultMutableLiveData.setValue(new LoginResult(new LoggedInUserView(authenticationToken.getUsername())));
                 token.setValue(authenticationToken.getToken());
                 apiService = new ApiService(token.getValue());
+
             }
 
             @Override
@@ -131,7 +134,7 @@ public class App extends Application {
             }
         });
     }
-    public void startlogin(String username, String password) {
+    public void startlogin(String username, String password,Context context) {
         AuthenticationRequestDto authenticationRequestDto = new AuthenticationRequestDto();
         authenticationRequestDto.setUsername(username);
         authenticationRequestDto.setPassword(password);
@@ -139,6 +142,8 @@ public class App extends Application {
         apiServiceLogin.getApi().login(authenticationRequestDto).enqueue(new Callback<Responce>() {
             @Override
             public void onResponse(Call<Responce> call, @Nullable Response<Responce> response) {
+                if(response.body()==null)
+                    return;
                 if (response.body().getStatusCode() != 200) {
                     return;
                 }
@@ -149,6 +154,10 @@ public class App extends Application {
                 account.setValue(accountNew);
                 isAuth = true;
                 token.setValue(authenticationToken.getToken());
+                Intent intent=new Intent(context,CatalogActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                ((AppCompatActivity)context).finish();
             }
 
             @Override
@@ -164,6 +173,10 @@ public class App extends Application {
         apiServiceLogin.getApi().register(authenticationRequestDto).enqueue(new Callback<Responce>() {
             @Override
             public void onResponse(Call<Responce> call, Response<Responce> response) {
+                if(response.body()==null) {
+                    registerResultMutableLiveData.setValue(new RegisterResult(R.string.server_error));
+                    return;
+                }
                 if (response.body().getStatusCode() != 200) {
                     registerResultMutableLiveData.setValue(new RegisterResult(R.string.badCredential));
                     return;

@@ -23,7 +23,7 @@ public class ApiService {
 
     APICatalog apiCatalog;
     APIFile apiFile;
-    final String URL="http://192.168.0.104:8081/";
+    final String URL="http://192.168.1.120:8081/";
     String token;
     final String BEARER="Bearer_";
     public ApiService(String token) {
@@ -73,6 +73,8 @@ public class ApiService {
         // Adding custom deserializers
         builder.registerTypeAdapter(DTO.class,
                 new ConvertableDeserializer<DTO>());
+        builder.registerTypeHierarchyAdapter(byte[].class,
+                new ByteArrayTypeAdapter());
         final Gson gson = builder.create();
 
         return GsonConverterFactory.create(gson);
